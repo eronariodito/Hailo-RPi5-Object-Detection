@@ -111,7 +111,7 @@ class GStreamerApp:
             os.environ["GST_DEBUG_DUMP_DOT_DIR"] = os.getcwd()
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
-        print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
+        #print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
         return True
 
     def create_pipeline(self):
