@@ -81,8 +81,8 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
     elif source_type == 'rpi':
         source_element = (
             f'appsrc name=app_source is-live=true leaky-type=downstream max-buffers=3 ! '
-            'videoflip name=videoflip video-direction=horiz ! '
-            f'video/x-raw, format={video_format}, width={video_width}, height={video_height} ! '
+            #'videoflip name=videoflip video-direction=horiz ! '
+            #f'video/x-raw, format={video_format}, width={video_width}, height={video_height} ! '
         )
     elif source_type == 'libcamera':
         source_element = (
@@ -103,10 +103,10 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
         )
     source_pipeline = (
         f'{source_element} '
-        f'{QUEUE(name=f"{name}_scale_q")} ! '
-        f'videoscale name={name}_videoscale n-threads=2 ! '
-        f'{QUEUE(name=f"{name}_convert_q")} ! '
-        f'videoconvert n-threads=3 name={name}_convert qos=false ! '
+        #f'{QUEUE(name=f"{name}_scale_q")} ! '
+        #f'videoscale name={name}_videoscale n-threads=2 ! '
+        #f'{QUEUE(name=f"{name}_convert_q")} ! '
+        #f'videoconvert n-threads=3 name={name}_convert qos=false ! '
         f'video/x-raw, pixel-aspect-ratio=1/1, format={video_format}, width={video_width}, height={video_height} '
     )
 
