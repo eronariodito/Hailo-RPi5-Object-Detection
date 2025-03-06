@@ -131,7 +131,7 @@ class GStreamerApp:
         textoverlay = self.pipeline.get_by_name("text_overlay")
         if textoverlay:
             # Font selection - professional, readable font
-            textoverlay.set_property("font-desc", "Roboto Bold 28")  
+            textoverlay.set_property("font-desc", "Arial Bold 12")  
             
             # Text styling
             textoverlay.set_property("valignment", "top")  # Vertical alignment
