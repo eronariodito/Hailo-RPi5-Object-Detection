@@ -142,7 +142,7 @@ class GStreamerApp:
             textoverlay.set_property("color", 0xFFFFFFFF)     # White text (ARGB)
             textoverlay.set_property("outline-color", 0xFF000000)  # Black outline
             textoverlay.set_property("shaded-background", True)    # Background shading
-            textoverlay.set_property("shadow", True)          # Text shadow
+            #textoverlay.set_property("shadow", True)          # Text shadow
             
             # For better readability
             textoverlay.set_property("text-x", 0.02)          # Position from left
