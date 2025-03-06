@@ -113,8 +113,6 @@ class GStreamerDetectionApp(GStreamerApp):
             f'{tracker_pipeline} ! '
             f'{user_callback_pipeline} ! '
             f'{display_pipeline}'
-            'textoverlay name=text_overlay text="DIDAAAAAA" valignment=bottom halignment=center font-desc="Sans, 24"'
-
         )
         print(pipeline_string)
         return pipeline_string
