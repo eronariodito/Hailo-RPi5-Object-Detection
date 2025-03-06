@@ -126,6 +126,27 @@ class GStreamerApp:
             sys.exit(1)
 
         # Connect to hailo_display fps-measurements
+        textoverlay = self.pipeline.get_by_name("text_overlay")
+        if textoverlay:
+            # Font selection - professional, readable font
+            textoverlay.set_property("font-desc", "Roboto Bold 28")  
+            
+            # Text styling
+            textoverlay.set_property("valignment", "bottom")  # Vertical alignment
+            textoverlay.set_property("halignment", "left")    # Horizontal alignment
+            textoverlay.set_property("line-alignment", "left")
+            textoverlay.set_property("xpad", 20)              # Horizontal padding
+            textoverlay.set_property("ypad", 20)              # Vertical padding
+            
+            # Colors and visibility
+            textoverlay.set_property("color", 0xFFFFFFFF)     # White text (ARGB)
+            textoverlay.set_property("outline-color", 0xFF000000)  # Black outline
+            textoverlay.set_property("shaded-background", True)    # Background shading
+            textoverlay.set_property("shadow", True)          # Text shadow
+            
+            # For better readability
+            textoverlay.set_property("text-x", 0.02)          # Position from left
+            textoverlay.set_property("text-y", 0.92)          # Position from top
         if self.show_fps:
             print("Showing FPS")
             self.pipeline.get_by_name("hailo_display").connect("fps-measurements", self.on_fps_measurement)
