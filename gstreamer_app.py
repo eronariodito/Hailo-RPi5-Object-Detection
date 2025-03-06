@@ -113,7 +113,7 @@ class GStreamerApp:
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         new_text = f"FPS: {fps:.2f}\nDroprate: {droprate:.2f}\nAvg FPS: {avgfps:.2f}"
         self.pipeline.get_by_name("text_overlay").set_property("text", new_text)
-        print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
+        #print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
         return True
 
     def create_pipeline(self):
