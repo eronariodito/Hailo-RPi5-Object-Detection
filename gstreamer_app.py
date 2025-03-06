@@ -111,7 +111,7 @@ class GStreamerApp:
             os.environ["GST_DEBUG_DUMP_DOT_DIR"] = os.getcwd()
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
-        #print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
+        print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
         return True
 
     def create_pipeline(self):
@@ -202,6 +202,7 @@ class GStreamerApp:
                 identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
 
         hailo_display = self.pipeline.get_by_name("hailo_display")
+        
         if hailo_display is None:
             print("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
 
