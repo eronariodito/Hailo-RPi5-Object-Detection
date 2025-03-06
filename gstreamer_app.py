@@ -111,6 +111,8 @@ class GStreamerApp:
             os.environ["GST_DEBUG_DUMP_DOT_DIR"] = os.getcwd()
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
+        new_text = f"FPS: {fps:.2f}\nDroprate: {droprate:.2f}\nAvg FPS: {avgfps:.2f}"
+        self.pipeline.get_by_name("text_overlay").set_property("text", new_text)
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
         return True
 
@@ -132,7 +134,7 @@ class GStreamerApp:
             textoverlay.set_property("font-desc", "Roboto Bold 28")  
             
             # Text styling
-            textoverlay.set_property("valignment", "bottom")  # Vertical alignment
+            textoverlay.set_property("valignment", "top")  # Vertical alignment
             textoverlay.set_property("halignment", "left")    # Horizontal alignment
             textoverlay.set_property("line-alignment", "left")
             textoverlay.set_property("xpad", 20)              # Horizontal padding
