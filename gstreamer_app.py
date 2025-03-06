@@ -145,8 +145,8 @@ class GStreamerApp:
             #textoverlay.set_property("shadow", True)          # Text shadow
             
             # For better readability
-            textoverlay.set_property("text-x", 0.02)          # Position from left
-            textoverlay.set_property("text-y", 0.92)          # Position from top
+            #textoverlay.set_property("text-x", 0.02)          # Position from left
+            #extoverlay.set_property("text-y", 0.92)          # Position from top
         if self.show_fps:
             print("Showing FPS")
             self.pipeline.get_by_name("hailo_display").connect("fps-measurements", self.on_fps_measurement)
