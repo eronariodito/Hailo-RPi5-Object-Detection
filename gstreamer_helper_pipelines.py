@@ -259,7 +259,7 @@ def DISPLAY_PIPELINE(video_sink='autovideosink', sync='true', show_fps='false', 
         f'{QUEUE(name=f"{name}_videoconvert_q")} ! '
         f'videoconvert name={name}_videoconvert n-threads=2 qos=false ! '
         f'{QUEUE(name=f"{name}_q")} ! '
-        'textoverlay name=text_overlay text="DIDAAAAAA" valignment=bottom halignment=center font-desc="Sans, 24" !'
+        'textoverlay name=text_overlay text="DIDAAAAAA" valignment=bottom halignment=center font-desc="Arial, 36" !'
         f'fpsdisplaysink name={name} video-sink={video_sink} sync={sync} text-overlay={show_fps} signal-fps-measurements=true'
     )
 
