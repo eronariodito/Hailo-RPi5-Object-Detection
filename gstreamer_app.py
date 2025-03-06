@@ -10,7 +10,7 @@ import numpy as np
 import time
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
-from hailo_apps_infra.gstreamer_helper_pipelines import get_source_type
+from gstreamer_helper_pipelines import get_source_type
 
 try:
     from picamera2 import Picamera2
