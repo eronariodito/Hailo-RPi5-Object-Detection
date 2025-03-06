@@ -1,0 +1,34 @@
+[2025-03-06 12:27:01.119] [4968] [HailoRT] [info] [device.cpp:49] [Device] OS Version: Linux 6.6.74+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.6.74-1+rpt1 (2025-01-27) aarch64
+[2025-03-06 12:27:01.120] [4968] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:27:01.121] [4968] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:29:46.019] [5033] [HailoRT] [info] [device.cpp:49] [Device] OS Version: Linux 6.6.74+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.6.74-1+rpt1 (2025-01-27) aarch64
+[2025-03-06 12:29:46.020] [5033] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:29:46.022] [5033] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:29:50.002] [5049] [HailoRT] [info] [device.cpp:49] [Device] OS Version: Linux 6.6.74+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.6.74-1+rpt1 (2025-01-27) aarch64
+[2025-03-06 12:29:50.004] [5049] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:29:50.004] [5049] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:29:50.069] [5046] [HailoRT] [info] [vdevice.cpp:523] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: ROUND_ROBIN, multi_process_service: false
+[2025-03-06 12:29:50.081] [5046] [HailoRT] [info] [device.cpp:49] [Device] OS Version: Linux 6.6.74+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.6.74-1+rpt1 (2025-01-27) aarch64
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [info] [vdevice.cpp:651] [create] VDevice Infos: 0000:01:00.0
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [error] [file_utils.cpp:40] [read_binary_file] CHECK failed - Error opening file /home/bitsimnow/Hailo-RPi5-Object-Detection/../resources/yolov8s_h8l.hef
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [error] [hef.cpp:525] [parse_hef_file] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [error] [hef.cpp:1002] [Impl] Failed parsing HEF file
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [error] [hef.cpp:314] [create] Failed creating HEF
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [error] [hef.cpp:170] [create] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [error] [infer_model.cpp:242] [create] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
+[2025-03-06 12:29:50.083] [5046] [HailoRT] [error] [vdevice.cpp:756] [create_infer_model] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
+[2025-03-06 12:31:16.394] [5083] [HailoRT] [info] [device.cpp:49] [Device] OS Version: Linux 6.6.74+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.6.74-1+rpt1 (2025-01-27) aarch64
+[2025-03-06 12:31:16.395] [5083] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:31:16.396] [5083] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:31:16.457] [5080] [HailoRT] [info] [vdevice.cpp:523] [create] Creating vdevice with params: device_count: 1, scheduling_algorithm: ROUND_ROBIN, multi_process_service: false
+[2025-03-06 12:31:16.469] [5080] [HailoRT] [info] [device.cpp:49] [Device] OS Version: Linux 6.6.74+rpt-rpi-2712 #1 SMP PREEMPT Debian 1:6.6.74-1+rpt1 (2025-01-27) aarch64
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [info] [control.cpp:108] [control__parse_identify_results] firmware_version is: 4.20.0
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [info] [vdevice.cpp:651] [create] VDevice Infos: 0000:01:00.0
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [error] [file_utils.cpp:40] [read_binary_file] CHECK failed - Error opening file /home/bitsimnow/Hailo-RPi5-Object-Detection/../resources/yolov8s_h8l.hef
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [error] [hef.cpp:525] [parse_hef_file] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [error] [hef.cpp:1002] [Impl] Failed parsing HEF file
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [error] [hef.cpp:314] [create] Failed creating HEF
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [error] [hef.cpp:170] [create] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [error] [infer_model.cpp:242] [create] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
+[2025-03-06 12:31:16.471] [5080] [HailoRT] [error] [vdevice.cpp:756] [create_infer_model] CHECK_SUCCESS failed with status=HAILO_OPEN_FILE_FAILURE(13)
