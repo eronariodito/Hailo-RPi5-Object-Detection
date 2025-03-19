@@ -95,8 +95,8 @@ class GStreamerApp:
 
         # Set Hailo parameters; these parameters should be set based on the model used
         self.batch_size = 1
-        self.video_width = 1280
-        self.video_height = 720
+        self.video_width = 2304
+        self.video_height = 1296
         self.video_format = "RGB"
         self.hef_path = None
         self.app_callback = None
