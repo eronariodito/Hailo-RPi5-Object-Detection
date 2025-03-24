@@ -24,7 +24,7 @@ class GstOpenCVPipeline:
         #self.appsrc = self.sink_pipeline.get_by_name("opencv_src")
 
     def picamera_thread(self):
-        appsrc = self.pipeline.get_by_name("app_source")
+        appsrc = self.pipeline.get_by_name("opencv_src")
         appsrc.set_property("is-live", True)
         appsrc.set_property("format", Gst.Format.TIME)
         print("appsrc properties: ", appsrc)
