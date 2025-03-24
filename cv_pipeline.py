@@ -8,6 +8,8 @@ class GstOpenCVPipeline:
         # Initialize GStreamer
         Gst.init(None)
         self.picamera_config = None
+        self.image_width = 1920
+        self.image_height = 1080
 
         # Define the sink pipeline
         sink_pipeline_str = (
