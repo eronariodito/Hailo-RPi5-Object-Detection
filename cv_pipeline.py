@@ -21,7 +21,7 @@ class GstOpenCVPipeline:
         )
 
         self.pipeline = Gst.parse_launch(sink_pipeline_str)
-        self.appsrc = self.sink_pipeline.get_by_name("opencv_src")
+        #self.appsrc = self.sink_pipeline.get_by_name("opencv_src")
 
     def picamera_thread(self):
         appsrc = self.pipeline.get_by_name("app_source")
@@ -78,7 +78,7 @@ class GstOpenCVPipeline:
 
         self.loop = GLib.MainLoop()
 
-        self.picam_thread = threading.Thread(target=self.picamera_thread, args=(self,), daemon=True )
+        self.picam_thread = threading.Thread(target=self.picamera_thread, args=(), daemon=True )
         self.picam_thread.start()
 
         try:
@@ -91,8 +91,8 @@ class GstOpenCVPipeline:
             # Clean up
             self.pipeline.set_state(Gst.State.NULL)
 
-            if self.inference_thread.is_alive():
-                self.inference_thread.join()
+            if self.picam_thread.is_alive():
+                self.picam_thread.join()
 
             self.loop.quit()
             print("Cleanup complete. Exiting...")
