@@ -32,8 +32,8 @@ class GstOpenCVPipeline:
         with Picamera2() as picam2:
             if self.picamera_config is None:
                 # Default configuration
-                main = {'size': (self.video_width, self.video_height), 'format': 'RGB888'}
-                lores = {'size': (self.video_width, self.video_height), 'format': 'RGB888'}
+                main = {'size': (self.image_width, self.image_height), 'format': 'RGB888'}
+                lores = {'size': (self.image_width, self.image_height), 'format': 'RGB888'}
                 controls = {}
                 config = picam2.create_preview_configuration(main=main, lores=lores, controls=controls)
             else:
