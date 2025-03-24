@@ -6,7 +6,7 @@ from picamera2 import Picamera2
 import cv2
 import threading
 import numpy as np
-
+import queue
 
 class GstOpenCVPipeline:
     def __init__(self):
@@ -15,6 +15,8 @@ class GstOpenCVPipeline:
         self.picamera_config = None
         self.image_width = 1920
         self.image_height = 1080
+
+        self.cam_queue = queue.Queue(maxsize=1)
 
         # Define the sink pipeline
         sink_pipeline_str = (
@@ -25,15 +27,18 @@ class GstOpenCVPipeline:
             "fpsdisplaysink name=display video-sink=autovideosink sync=true text-overlay=true signal-fps-measurements=true"
         )
 
+        sink_pipeline_str = (
+            "appsrc name=opencv_src format=time is-live=true do-timestamp=true block=false "
+            f'caps=video/x-raw,format=RGB,width=640,height=640 ! '
+            "queue max-size-buffers=3 leaky=downstream ! "
+            'videoconvert !  textoverlay name=text_overlay text=" " valignment=bottom halignment=center font-desc="Arial, 36" !'
+            "fpsdisplaysink name=display video-sink=autovideosink sync=true text-overlay=true signal-fps-measurements=true"
+        )
+
         self.pipeline = Gst.parse_launch(sink_pipeline_str)
-        #self.appsrc = self.sink_pipeline.get_by_name("opencv_src")
+        self.appsrc = self.pipeline.get_by_name("opencv_src")
 
     def picamera_thread(self):
-        appsrc = self.pipeline.get_by_name("opencv_src")
-        appsrc.set_property("is-live", True)
-        appsrc.set_property("format", Gst.Format.TIME)
-        print("appsrc properties: ", appsrc)
-
         with Picamera2() as picam2:
             if self.picamera_config is None:
                 # Default configuration
@@ -50,13 +55,6 @@ class GstOpenCVPipeline:
             format_str = 'RGB' if lores_stream['format'] == 'RGB888' else self.video_format
             width, height = lores_stream['size']
             print(f"Picamera2 configuration: width={width}, height={height}, format={format_str}")
-            appsrc.set_property(
-                "caps",
-                Gst.Caps.from_string(
-                    f"video/x-raw, format={format_str}, width={width}, height={height}, "
-                    f"pixel-aspect-ratio=1/1"
-                )
-            )
             picam2.start()
 
             print("picamera_process started")
@@ -70,13 +68,75 @@ class GstOpenCVPipeline:
                 frame = cv2.cvtColor(frame_data, cv2.COLOR_BGR2RGB)
                 frame = np.asarray(frame)
                 # Create Gst.Buffer by wrapping the frame data
-                buffer = Gst.Buffer.new_wrapped(frame_data.tobytes())
+                # buffer = Gst.Buffer.new_wrapped(frame_data.tobytes())
 
-                # Push the buffer to appsrc
-                ret = appsrc.emit('push-buffer', buffer)
-                if ret != Gst.FlowReturn.OK:
-                    print("Failed to push buffer:", ret)
+                # # Push the buffer to appsrc
+                # ret = self.appsrc.emit('push-buffer', buffer)
+                # if ret != Gst.FlowReturn.OK:
+                #     print("Failed to push buffer:", ret)
+                #     break
+                self.cam_queue.put((frame))
+
+    def preprocess_thread(self, queue):
+        while True:
+            try:
+                item = queue.get(timeout=5)
+
+                if item is None:
                     break
+
+                frame = item
+
+                input_data, pad = self.preprocess(frame)
+                input_data = (input_data / self.in_scale + self.in_zero_point).astype(np.int8)
+
+                #self.input_queue.put((input_data, pad, frame, map_info, buf))
+
+                # Create a new Gst.Buffer from the flipped frame without copying the memory
+                new_buffer = Gst.Buffer.new_wrapped(input_data.tobytes())
+
+                self.appsrc.emit("push-buffer", new_buffer)
+            except Exception as e:
+                print(f"Error in preprocessing thread: {e}")
+                
+    def preprocess(self, frame):
+        
+        # frame_resized = cv2.resize(frame, (self.input_shape[2], self.input_shape[1]))
+        frame, pad = self.letterbox(frame, (640, 640))
+        frame = frame[None]
+        frame = np.ascontiguousarray(frame)
+        frame = frame.astype(np.float32)
+        return frame/255, pad
+
+    def letterbox(
+        self, frame, new_shape):
+        """
+        Resize and pad image while maintaining aspect ratio.
+
+        Args:
+            img (np.ndarray): Input image with shape (H, W, C).
+            new_shape (Tuple[int, int]): Target shape (height, width).
+
+        Returns:
+            (np.ndarray): Resized and padded image.
+            (Tuple[float, float]): Padding ratios (top/height, left/width) for coordinate adjustment.
+        """
+        shape = frame.shape[:2]  # Current shape [height, width]
+
+        # Scale ratio (new / old)
+        r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+
+        # Compute padding
+        new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+        dw, dh = (new_shape[1] - new_unpad[0]) / 2, (new_shape[0] - new_unpad[1]) / 2  # wh padding
+
+        if shape[::-1] != new_unpad:  # Resize if needed
+            frame = cv2.resize(frame, new_unpad, interpolation=cv2.INTER_LINEAR)
+        top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+        left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+        frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(114, 114, 114))
+
+        return frame, (top / frame.shape[0], left / frame.shape[1])
 
     def run(self):
         self.pipeline.set_state(Gst.State.PLAYING)
