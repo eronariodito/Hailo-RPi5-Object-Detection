@@ -146,6 +146,9 @@ class GstOpenCVPipeline:
         self.picam_thread = threading.Thread(target=self.picamera_thread, args=(), daemon=True )
         self.picam_thread.start()
 
+        self.preprocess_thread = threading.Thread(target=self.preprocess_thread, args=(self.cam_queue,), daemon=True )
+        self.preprocess_thread.start()
+
         try:
             # Run the main loop
             self.loop.run()
@@ -156,8 +159,12 @@ class GstOpenCVPipeline:
             # Clean up
             self.pipeline.set_state(Gst.State.NULL)
 
+            self.cam_queue.put(None)
+
             if self.picam_thread.is_alive():
                 self.picam_thread.join()
+            if self.preprocess_thread.is_alive():
+                self.preprocess_thread.join()
 
             self.loop.quit()
             print("Cleanup complete. Exiting...")
