@@ -95,8 +95,8 @@ class GStreamerApp:
 
         # Set Hailo parameters; these parameters should be set based on the model used
         self.batch_size = 1
-        self.video_width = 2304
-        self.video_height = 1296
+        self.video_width = 1280
+        self.video_height = 720
         self.video_format = "RGB"
         self.hef_path = None
         self.app_callback = None
@@ -287,7 +287,7 @@ def picamera_thread(pipeline, video_width, video_height, video_format, picamera_
     with Picamera2() as picam2:
         if picamera_config is None:
             # Default configuration
-            main = {'size': (1920, 1080), 'format': 'RGB888'}
+            main = {'size': (2304, 1296), 'format': 'RGB888'}
             lores = {'size': (video_width, video_height), 'format': 'RGB888'}
             controls = {}
             config = picam2.create_preview_configuration(main=main, lores=lores, controls=controls)
