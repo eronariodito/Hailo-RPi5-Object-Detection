@@ -88,7 +88,7 @@ class GstOpenCVPipeline:
                 frame = item
 
                 input_data, pad = self.preprocess(frame)
-                input_data = (input_data / self.in_scale + self.in_zero_point).astype(np.int8)
+                #input_data = (input_data / self.in_scale + self.in_zero_point).astype(np.int8)
 
                 #self.input_queue.put((input_data, pad, frame, map_info, buf))
 
@@ -106,7 +106,7 @@ class GstOpenCVPipeline:
         frame = frame[None]
         frame = np.ascontiguousarray(frame)
         frame = frame.astype(np.float32)
-        return frame/255, pad
+        return frame, pad
 
     def letterbox(
         self, frame, new_shape):
