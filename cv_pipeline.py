@@ -1,7 +1,12 @@
+import gi
+gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
+
 from picamera2 import Picamera2
 import cv2
 import threading
+import numpy as np
+
 
 class GstOpenCVPipeline:
     def __init__(self):
@@ -16,7 +21,7 @@ class GstOpenCVPipeline:
             "appsrc name=opencv_src format=time is-live=true do-timestamp=true block=false "
             f'caps=video/x-raw,format=RGB,width={self.image_width},height={self.image_height} ! '
             "queue max-size-buffers=3 leaky=downstream ! "
-            'autovideoconvert !  textoverlay name=text_overlay text=" " valignment=bottom halignment=center font-desc="Arial, 36" !'
+            'videoconvert !  textoverlay name=text_overlay text=" " valignment=bottom halignment=center font-desc="Arial, 36" !'
             "fpsdisplaysink name=display video-sink=autovideosink sync=true text-overlay=true signal-fps-measurements=true"
         )
 
@@ -62,8 +67,8 @@ class GstOpenCVPipeline:
                     print("Failed to capture frame.")
                     break
                 # Convert framontigue data if necessary
-                # frame = cv2.cvtColor(frame_data, cv2.COLOR_BGR2RGB)
-                # frame = np.asarray(frame)
+                frame = cv2.cvtColor(frame_data, cv2.COLOR_BGR2RGB)
+                frame = np.asarray(frame)
                 # Create Gst.Buffer by wrapping the frame data
                 buffer = Gst.Buffer.new_wrapped(frame_data.tobytes())
 
