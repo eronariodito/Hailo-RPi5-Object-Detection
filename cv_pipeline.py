@@ -15,8 +15,8 @@ class GstOpenCVPipeline:
         # Initialize GStreamer
         Gst.init(None)
         self.picamera_config = None
-        self.image_width = 1920
-        self.image_height = 1080
+        self.image_width = 2340
+        self.image_height = 1296
 
         self.cam_queue = queue.Queue(maxsize=1)
         self.input_queue = queue.Queue()
@@ -59,7 +59,8 @@ class GstOpenCVPipeline:
         self.hailo_inference = HailoAsyncInference(
             self.net_path, self.input_queue, self.output_queue, 1, send_original_frame=True
         )
-        height, width, _ = self.hailo_inference.get_input_shape()
+        self.input_height, self.input_width, _ = self.hailo_inference.get_input_shape()
+        
 
         with open("coco.txt", 'r', encoding="utf-8") as f:
             self.labels = f.read().splitlines()
@@ -86,6 +87,9 @@ class GstOpenCVPipeline:
 
             #print(f"Picamera2 configuration: width={width}, height={height}, format={format_str}")
             picam2.start()
+
+            picam2.set_controls({"FrameRate": 120})
+
 
             print("picamera_process started")
             while True:
@@ -123,7 +127,7 @@ class GstOpenCVPipeline:
     def preprocess(self, frame):
         
         # frame_resized = cv2.resize(frame, (self.input_shape[2], self.input_shape[1]))
-        frame, pad = self.letterbox(frame, (640, 640))
+        frame, pad = self.letterbox(frame, (self.input_height, self.input_width))
         frame = frame.astype(np.uint8)
         frame = np.ascontiguousarray(frame)
 
@@ -229,11 +233,34 @@ class GstOpenCVPipeline:
             scale_factor (float): Scale factor for coordinates.
         """
         label = f"{self.labels[cls]}: {score:.2f}%"
+        font_scale = min(image.shape[0], image.shape[1]) / 1000
         ymin, xmin, ymax, xmax = box
         ymin, xmin, ymax, xmax = int(ymin * scale_factor), int(xmin * scale_factor), int(ymax * scale_factor), int(xmax * scale_factor)
         cv2.rectangle(image, (xmin, ymin), (xmax, ymax), color, 2)
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(image, label, (xmin + 4, ymin + 20), font, 0.5, color, 1, cv2.LINE_AA)
+        
+        # Calculate the dimensions of the label text
+        (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
+
+         # Calculate the position of the label text
+        label_x = xmin
+        label_y = ymin - 10 if ymin - 10 > label_height else ymin + 10
+
+        cv2.rectangle(
+            image,
+            (int(label_x), int(label_y - label_height)),
+            (int(label_x + label_width), int(label_y + label_height)),
+            color,
+            cv2.FILLED,
+        )
+
+        a = 1 - (0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]) / 255
+
+        if a < 0.5:
+            font_color = (0, 0, 0)
+        else:
+            font_color = (255, 255, 255)
+            
+        cv2.putText(image, label, (int(label_x), int(label_y)), cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_color, 1, cv2.LINE_AA)
 
     def extract_detections(self, input_data: list, threshold: float = 0.5) -> dict:
         """
@@ -282,7 +309,7 @@ class GstOpenCVPipeline:
                 detections = self.extract_detections(infer_results)
 
                 frame_with_detections = self.draw_detections(
-                    detections, original_frame,
+                    detections, original_frame, min_score = 0.25
                 )
 
                 # Create a new Gst.Buffer from the flipped frame without copying the memory
@@ -322,11 +349,15 @@ class GstOpenCVPipeline:
             self.pipeline.set_state(Gst.State.NULL)
 
             self.cam_queue.put(None)
+            self.input_queue.put(None)
+            self.output_queue.put(None)
 
             if self.picam_thread.is_alive():
                 self.picam_thread.join()
             if self.preprocess_thread.is_alive():
                 self.preprocess_thread.join()
+            if self.postprocess_thread.is_alive():
+                self.postprocess_thread.join()
 
             self.loop.quit()
             print("Cleanup complete. Exiting...")
