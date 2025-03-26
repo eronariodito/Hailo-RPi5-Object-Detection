@@ -9,14 +9,15 @@ import numpy as np
 import queue
 import os
 from utils import HailoAsyncInference
+import hailo_platform as hpf
 
 class GstOpenCVPipeline:
     def __init__(self):
         # Initialize GStreamer
         Gst.init(None)
         self.picamera_config = None
-        self.image_width = 2340
-        self.image_height = 1296
+        self.image_width = 1920
+        self.image_height = 1080
 
         self.cam_queue = queue.Queue(maxsize=1)
         self.input_queue = queue.Queue()
@@ -31,7 +32,7 @@ class GstOpenCVPipeline:
             "fpsdisplaysink name=display video-sink=autovideosink sync=true text-overlay=false signal-fps-measurements=true"
         )
 
-        self.net_path = os.getcwd() + "/resources/yolov8s_h8l.hef"
+        self.net_path = os.getcwd() + "/resources/yolo11s_416.hef"
         self.pipeline = Gst.parse_launch(sink_pipeline_str)
         self.appsrc = self.pipeline.get_by_name("opencv_src")
 
@@ -56,11 +57,27 @@ class GstOpenCVPipeline:
 
         self.pipeline.get_by_name("display").connect("fps-measurements", self.on_fps_measurement)
 
-        self.hailo_inference = HailoAsyncInference(
-            self.net_path, self.input_queue, self.output_queue, 1, send_original_frame=True
-        )
-        self.input_height, self.input_width, _ = self.hailo_inference.get_input_shape()
-        
+        params = hpf.VDevice.create_params()
+        # Set the scheduling algorithm to round-robin to activate the scheduler
+        params.scheduling_algorithm = hpf.HailoSchedulingAlgorithm.ROUND_ROBIN
+
+        self.hef = hpf.HEF(self.net_path)
+        self.target = hpf.VDevice(params)
+        self.infer_model = self.target.create_infer_model(self.net_path)
+
+        configure_params = hpf.ConfigureParams.create_from_hef(self.hef, interface=hpf.HailoStreamInterface.PCIe)
+        self.network_group = self.target.configure(self.hef, configure_params)[0]
+        network_group_params =self.network_group.create_params()
+
+        self.input_vstream_info = self.hef.get_input_vstream_infos()[0]
+        self.output_vstream_info = self.hef.get_output_vstream_infos()[0]
+
+        input_shape = self.input_vstream_info.shape
+        self.input_height=input_shape[0]
+        self.input_width = input_shape[0]
+
+        self.input_vstreams_params = hpf.InputVStreamParams.make_from_network_group(self.network_group, quantized=False, format_type=hpf.FormatType.UINT8)
+        self.output_vstreams_params = hpf.OutputVStreamParams.make_from_network_group(self.network_group, quantized=False, format_type=hpf.FormatType.FLOAT32)
 
         with open("coco.txt", 'r', encoding="utf-8") as f:
             self.labels = f.read().splitlines()
@@ -219,6 +236,30 @@ class GstOpenCVPipeline:
 
         return box
 
+    def inference_thread(self, queue):
+    
+         while True:
+            try:
+                item = queue.get(timeout=5)
+
+                if item is None:
+                    break
+
+                frame, input_data = item
+
+                with hpf.InferVStreams(self.network_group,self.input_vstreams_params, self.output_vstreams_params) as infer_pipeline:
+                    infer_pipeline.set_nms_iou_threshold(0.5)
+                    infer_pipeline.set_nms_score_threshold(0.1)
+                    input_data = {self.input_vstream_info.name: np.expand_dims(input_data[0], axis=0)}
+                    results = infer_pipeline.infer(input_data)
+                    output_data = results[self.output_vstream_info.name]
+
+                self.output_queue.put((frame, output_data[0]))
+
+            except Exception as e:
+                print(f"Error in inference thread: {e}")
+
+
 
     def draw_detection(self, image: np.ndarray, box: list, cls: int, score: float, color: tuple, scale_factor: float):
         """
@@ -233,13 +274,13 @@ class GstOpenCVPipeline:
             scale_factor (float): Scale factor for coordinates.
         """
         label = f"{self.labels[cls]}: {score:.2f}%"
-        font_scale = min(image.shape[0], image.shape[1]) / 1000
+        font_scale = min(image.shape[0], image.shape[1]) / 2000
         ymin, xmin, ymax, xmax = box
         ymin, xmin, ymax, xmax = int(ymin * scale_factor), int(xmin * scale_factor), int(ymax * scale_factor), int(xmax * scale_factor)
         cv2.rectangle(image, (xmin, ymin), (xmax, ymax), color, 2)
         
         # Calculate the dimensions of the label text
-        (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
+        (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_DUPLEX, font_scale, 1)
 
          # Calculate the position of the label text
         label_x = xmin
@@ -306,14 +347,15 @@ class GstOpenCVPipeline:
                 if len(infer_results) == 1:
                     infer_results = infer_results[0]
 
+
                 detections = self.extract_detections(infer_results)
 
                 frame_with_detections = self.draw_detections(
-                    detections, original_frame, min_score = 0.25
+                    detections, original_frame[0], min_score = 0.25
                 )
-
+                
                 # Create a new Gst.Buffer from the flipped frame without copying the memory
-                new_buffer = Gst.Buffer.new_wrapped(original_frame.tobytes())
+                new_buffer = Gst.Buffer.new_wrapped(original_frame[0].tobytes())
 
                 self.appsrc.emit("push-buffer", new_buffer)
             except Exception as e:
@@ -331,11 +373,12 @@ class GstOpenCVPipeline:
         self.preprocess_thread = threading.Thread(target=self.preprocess_thread, args=(self.cam_queue,), daemon=True )
         self.preprocess_thread.start()
 
+        self.inference_thread = threading.Thread(target=self.inference_thread, args=(self.input_queue,), daemon=True )
+        self.inference_thread.start()
+
         self.postprocess_thread = threading.Thread(target=self.postprocess_thread, args=(self.output_queue,), daemon=True )
         self.postprocess_thread.start()
 
-        
-        self.hailo_inference.run()
 
         try:
             # Run the main loop
@@ -356,6 +399,8 @@ class GstOpenCVPipeline:
                 self.picam_thread.join()
             if self.preprocess_thread.is_alive():
                 self.preprocess_thread.join()
+            if self.inference_thread.is_alive():
+                self.inference_thread.join()
             if self.postprocess_thread.is_alive():
                 self.postprocess_thread.join()
 
