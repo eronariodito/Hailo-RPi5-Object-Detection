@@ -8,6 +8,7 @@ import threading
 import numpy as np
 import queue
 import os
+import sys
 from utils import HailoAsyncInference
 
 class GstOpenCVPipeline:
@@ -31,7 +32,7 @@ class GstOpenCVPipeline:
             "fpsdisplaysink name=display video-sink=autovideosink sync=true text-overlay=false signal-fps-measurements=true"
         )
 
-        self.net_path = os.getcwd() + "/resources/yolov8n_416.hef"
+        self.net_path = os.getcwd() + "/models/yolo11s_416.hef"
         self.pipeline = Gst.parse_launch(sink_pipeline_str)
         self.appsrc = self.pipeline.get_by_name("opencv_src")
 
@@ -56,9 +57,14 @@ class GstOpenCVPipeline:
 
         self.pipeline.get_by_name("display").connect("fps-measurements", self.on_fps_measurement)
 
-        self.hailo_inference = HailoAsyncInference(
-            self.net_path, self.input_queue, self.output_queue, 1, send_original_frame=True
-        )
+        try:
+            self.hailo_inference = HailoAsyncInference(
+                self.net_path, self.input_queue, self.output_queue, 1, send_original_frame=True
+            )
+        except Exception as e:
+            print(f"Error loading model: {e}")
+            sys.exit(1) 
+
         self.input_height, self.input_width, _ = self.hailo_inference.get_input_shape()
         
 
@@ -69,7 +75,6 @@ class GstOpenCVPipeline:
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         new_text = f"FPS: {fps:.2f}\nDroprate: {droprate:.2f}\nAvg FPS: {avgfps:.2f}"
         self.pipeline.get_by_name("text_overlay").set_property("text", new_text)
-        #print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
         return True
 
     def picamera_thread(self):
@@ -116,17 +121,12 @@ class GstOpenCVPipeline:
 
                 input_data, pad = self.preprocess(frame)
                
-                #input_data = (input_data / self.in_scale + self.in_zero_point).astype(np.int8)
-
-                #self.input_queue.put((input_data, pad, frame, map_info, buf))
                 self.input_queue.put(([frame], [input_data]))
 
             except Exception as e:
                 print(f"Error in preprocessing thread: {e}")
                 
     def preprocess(self, frame):
-        
-        # frame_resized = cv2.resize(frame, (self.input_shape[2], self.input_shape[1]))
         frame, pad = self.letterbox(frame, (self.input_height, self.input_width))
         frame = frame.astype(np.uint8)
         frame = np.ascontiguousarray(frame)
@@ -333,13 +333,11 @@ class GstOpenCVPipeline:
 
         self.postprocess_thread = threading.Thread(target=self.postprocess_thread, args=(self.output_queue,), daemon=True )
         self.postprocess_thread.start()
-
         
         self.hailo_inference.run()
 
         try:
             # Run the main loop
-
             self.loop.run()
         except KeyboardInterrupt:
             print("KeyboardInterrupt received. Shutting down...")

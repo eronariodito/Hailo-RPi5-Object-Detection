@@ -47,7 +47,6 @@ class HailoAsyncInference:
         print(dir(self.infer_model))
         print(dir(self.target))
         print(self.hef.get_output_vstream_infos())
-        help(self.infer_model.configure)
 
         self.output_type = output_type
         self.send_original_frame = send_original_frame

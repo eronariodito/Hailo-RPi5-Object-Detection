@@ -48,15 +48,15 @@ class GstOpenCVPipeline:
         print(output_shape)
 
    
-    def run(self, image_path = "bus.jpg"):
+    def run(self, image_path = "datasets/val2017/000000252776.jpg"):
         img = cv2.imread(image_path, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2RGB)
 
         input_data, pad = self.preprocess(img)
 
         with hpf.InferVStreams(self.network_group, self.input_vstreams_params, self.output_vstreams_params) as infer_pipeline:
-            infer_pipeline.set_nms_iou_threshold(0.98)
-            infer_pipeline.set_nms_score_threshold(0.2)
+            infer_pipeline.set_nms_iou_threshold(0.5)
+            infer_pipeline.set_nms_score_threshold(0.5)
             input_data = {self.input_vstream_info.name: np.expand_dims(input_data, axis=0)}
             results = infer_pipeline.infer(input_data)
             output_data = results[self.output_vstream_info.name]
@@ -224,6 +224,9 @@ class GstOpenCVPipeline:
         Returns:
             dict: Filtered detection results containing 'detection_boxes', 'detection_classes', 'detection_scores', and 'num_detections'.
         """
+
+
+
         boxes, scores, classes = [], [], []
         num_detections = 0
 

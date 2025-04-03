@@ -132,10 +132,7 @@ class GstOpenCVPipeline:
                 frame = item
 
                 input_data, pad = self.preprocess(frame)
-               
-                #input_data = (input_data / self.in_scale + self.in_zero_point).astype(np.int8)
-
-                #self.input_queue.put((input_data, pad, frame, map_info, buf))
+                
                 self.input_queue.put(([frame], [input_data]))
 
             except Exception as e:
@@ -248,8 +245,8 @@ class GstOpenCVPipeline:
                 frame, input_data = item
 
                 with hpf.InferVStreams(self.network_group,self.input_vstreams_params, self.output_vstreams_params) as infer_pipeline:
-                    infer_pipeline.set_nms_iou_threshold(0.5)
-                    infer_pipeline.set_nms_score_threshold(0.1)
+                    infer_pipeline.set_nms_iou_threshold(0.7)
+                    infer_pipeline.set_nms_score_threshold(0.001)
                     input_data = {self.input_vstream_info.name: np.expand_dims(input_data[0], axis=0)}
                     results = infer_pipeline.infer(input_data)
                     output_data = results[self.output_vstream_info.name]
