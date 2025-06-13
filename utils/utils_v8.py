@@ -124,14 +124,14 @@ def draw_detection(self, image: np.ndarray, box: list, cls: int, score: float, c
         color (tuple): Color for the bounding box.
         scale_factor (float): Scale factor for coordinates.
     """
-    label = f"{self.classes[cls]}: {score:.2f}%"
-    font_scale = min(image.shape[0], image.shape[1]) / 2000
+    label = f"{self.classes[cls]}: {score/100:.2f}"
+    font_scale = min(image.shape[0], image.shape[1]) / 1000
     ymin, xmin, ymax, xmax = box
     ymin, xmin, ymax, xmax = int(ymin * scale_factor), int(xmin * scale_factor), int(ymax * scale_factor), int(xmax * scale_factor)
     cv2.rectangle(image, (xmin, ymin), (xmax, ymax), color, 2)
     
     # Calculate the dimensions of the label text
-    (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_DUPLEX, font_scale, 1)
+    (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
 
         # Calculate the position of the label text
     label_x = xmin

@@ -60,6 +60,9 @@ class GstOpenCVPipeline:
         self.net_path = self.args.model_path
         self.pipeline = Gst.parse_launch(sink_pipeline_str)
         self.appsrc = self.pipeline.get_by_name("opencv_src")
+        self.sink = self.pipeline.get_by_name("display")
+        self.sink_pad = self.sink.get_static_pad("sink")
+        self.sink_pad.add_probe(Gst.PadProbeType.BUFFER, self.sink_probe)
 
         # Connect to display fps-measurements
         textoverlay = self.pipeline.get_by_name("text_overlay")
@@ -125,6 +128,19 @@ class GstOpenCVPipeline:
         self.pipeline.get_by_name("text_overlay").set_property("text", new_text)
         return True
 
+    def sink_probe(self, pad, info):
+        buffer = info.get_buffer()
+        if not buffer or buffer.pts == Gst.CLOCK_TIME_NONE:
+            print("No valid timestamp")
+            return Gst.PadProbeReturn.OK
+
+        now = Gst.util_get_timestamp()
+        latency_ns = now - buffer.pts
+        latency_ms = latency_ns / 1e6
+
+        print(f"[System Latency] {latency_ms:.2f} ms")
+        return Gst.PadProbeReturn.OK
+
     def picamera_thread(self):
         with Picamera2() as picam2:
             if self.picamera_config is None:
@@ -149,7 +165,6 @@ class GstOpenCVPipeline:
 
             #Set fps so auto-exposure doesn't introduce latency
             picam2.set_controls({"FrameRate": self.args.fps})
-            print(controls)
             picam2.set_controls({"AfMode": libcamera.controls.AfModeEnum.Continuous})
 
 
@@ -163,8 +178,13 @@ class GstOpenCVPipeline:
 
                 frame = cv2.cvtColor(frame_data, cv2.COLOR_BGR2RGB)
                 frame = np.asarray(frame)
-                
-                self.cam_queue.put((frame))
+
+                frame_pts = {
+                    'frame': frame,
+                    'pts': Gst.util_get_timestamp()
+                }
+
+                self.cam_queue.put((frame_pts))
 
     def cv2_camera_thread(self):
         # Initialize the camera
@@ -232,11 +252,11 @@ class GstOpenCVPipeline:
                 if item is None:
                     break
 
-                frame = item
+                frame = item['frame']
 
                 input_data, pad = preprocess(self, frame)
                
-                self.input_queue.put(([frame], [input_data]))
+                self.input_queue.put(([item], [input_data]))
 
             except Exception as e:
                 print(f"Error in preprocessing thread: {e}")
@@ -246,7 +266,9 @@ class GstOpenCVPipeline:
             try:
                 item = queue.get(timeout=5)
 
-                original_frame, infer_results = item
+                original_frame_pts, infer_results = item
+
+                original_frame = original_frame_pts['frame']
 
                 if len(infer_results) == 1:
                     infer_results = infer_results[0]
@@ -257,7 +279,8 @@ class GstOpenCVPipeline:
                     postprocess_v8(self, original_frame, infer_results, True, None)
 
                 new_buffer = Gst.Buffer.new_wrapped(original_frame.tobytes())
-
+                new_buffer.pts = int(original_frame_pts['pts'])
+                
                 self.appsrc.emit("push-buffer", new_buffer)
             except Exception as e:
                 if type(e).__name__ == "Empty":

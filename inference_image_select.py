@@ -173,7 +173,7 @@ class HEFBenchmark:
             with open(self.ann_file, 'r') as f:
                 coco_data = json.load(f)
 
-        target_filenames = ['20241202_072735_1.jpg', '20241202_074135_4.jpg', '20241202_084431_3.jpg']
+        target_filenames = ['000000255165.jpg']
 
         image_path = Path(self.val_folder)
         files = [
@@ -181,6 +181,8 @@ class HEFBenchmark:
             if f.is_file() and f.name in target_filenames and f.suffix.lower() in ['.png', '.jpg', '.jpeg', '.gif', '.bmp']
         ]
         
+        print(files)
+
         for idx,item in tqdm(enumerate(files), total=len(files), desc=f"🧠 {Fore.CYAN}Inference{Style.RESET_ALL}"):
             if hasattr(self, "ann_file"):
                 image_name = os.path.basename(item)

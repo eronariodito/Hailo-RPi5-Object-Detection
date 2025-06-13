@@ -26,8 +26,9 @@ def temp_ram_measurement(file, target_name, duration, time_interval):
             used_ram = mem.used / (1024 ** 2)
 
             process = psutil.Process(pid).memory_info().rss / (1024 ** 2)
-
-            log.write("{0},{1},{2:.1f},{3:.2f},{4:.2f}\n".format(strftime("%Y-%m-%d %H:%M:%S"),str(temp_cpu), (temp_hailo), (used_ram), (process)))
+            cpu_util = psutil.cpu_percent()
+            
+            log.write("{0},{1},{2:.1f},{3:.2f},{4:.2f}, {5:.2f}\n".format(strftime("%Y-%m-%d %H:%M:%S"),str(temp_cpu), (temp_hailo), (used_ram), (process),(cpu_util)))
 
             log.flush()
             sleep(time_interval)
